@@ -1,4 +1,3 @@
-import os
 import io
 import json
 import chess
@@ -6,6 +5,9 @@ import chess.svg
 import cairosvg
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, CallbackContext
+
+# Telegram bot tokenınızı buraya yazın
+token = "7651843103:AAGiChGdicvHQ9LOhV_Pk0hhqaF4fAWaEVw"  # ← kendi tokenınızı buraya koyun
 
 # Oyunları saklamak için dict
 games = {}
@@ -137,12 +139,6 @@ def button(update: Update, context: CallbackContext):
 
 def main():
     load_games()  # Bot başlatıldığında kayıtlı oyunları yükle
-
-    # Tokenı ortam değişkeninden al
-    token = os.environ.get("7651843103:AAGiChGdicvHQ9LOhV_Pk0hhqaF4fAWaEVw")
-    if not token:
-        print("Lütfen TELEGRAM_TOKEN ortam değişkenini ayarlayın!")
-        return
 
     app = ApplicationBuilder().token(token).build()
 
