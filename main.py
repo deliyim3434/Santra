@@ -6,13 +6,13 @@ import cairosvg
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# Telegram bot tokenınızı buraya yazın
-token = "7651843103:AAGiChGdicvHQ9LOhV_Pk0hhqaF4fAWaEVw"  # ← kendi tokenınızı buraya koyun
+# Bot tokenınızı buraya yazın (BotFather’dan aldığınız)
+token = "7651843103:AAGiChGdicvHQ9LOhV_Pk0hhqaF4fAWaEVw"
 
-# Oyunları saklamak için dict
+# Oyun durumları
 games = {}
 
-# JSON dosyasıyla oyunları kaydet
+# Oyunları kaydet
 def save_games():
     with open("games.json", "w") as f:
         json.dump({str(chat_id): {
@@ -21,7 +21,7 @@ def save_games():
             "turn": game["turn"]
         } for chat_id, game in games.items()}, f)
 
-# JSON dosyasından oyunları yükle
+# Oyunları yükle
 def load_games():
     global games
     try:
@@ -46,7 +46,7 @@ async def send_board(update: Update, board, message):
     bio.seek(0)
     await update.message.reply_photo(photo=bio, caption=message)
 
-# Inline butonlar: her hamle bir tuş
+# Inline hamle butonları
 def generate_buttons(board):
     buttons = []
     for move in board.legal_moves:
@@ -68,7 +68,7 @@ async def play(update: Update, context: ContextTypes.DEFAULT_TYPE):
     games[chat_id] = {
         "board": board,
         "players": [update.message.from_user.id],
-        "turn": 0  # Beyaz başlar
+        "turn": 0
     }
     save_games()
     await update.message.reply_text("Oyun başlatıldı! Rakibinizin /join ile katılmasını bekleyin.")
@@ -90,7 +90,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_games()
     await send_board(update, game["board"], "Oyuna katıldınız! Beyaz oyuncu hamleye başladı.")
 
-# Buton callback
+# Hamle butonu
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -104,7 +104,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     game = games[chat_id]
     board = game["board"]
 
-    # Sıra kontrolü
     if user_id != game["players"][game["turn"]]:
         await query.answer("Sıra sizde değil!")
         return
@@ -115,7 +114,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         board.push(move)
         save_games()
 
-        # Oyun bitiş kontrolü
         if board.is_checkmate():
             await query.edit_message_caption(caption=f"Şah mat! Kazanan: {'Beyaz' if game['turn']==0 else 'Siyah'}")
             del games[chat_id]
@@ -129,7 +127,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         game["turn"] = 1 - game["turn"]
 
-        # Mesajı güncelle
         await query.edit_message_caption(
             caption=f"Hamle yapıldı! Sıradaki: {'Beyaz' if game['turn']==0 else 'Siyah'}",
             reply_markup=generate_buttons(board)
@@ -137,11 +134,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.answer("Geçersiz hamle!")
 
+# Botu başlat
 def main():
     load_games()
     app = ApplicationBuilder().token(token).build()
 
-    # Komutlar
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("play", play))
     app.add_handler(CommandHandler("join", join))
